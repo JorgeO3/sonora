@@ -1,0 +1,14 @@
+[package]
+name = "sonora"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crossbeam = "0.8.4"
+hex = "0.4.3"
+hound = "3.5.1"
+mimalloc = "0.1.43"
+rayon = "1.10.0"
+rustfft = "6.2.0"
+sha1 = "0.10.6"
+symphonia = { version = "0.5.4", features = ["opt-simd"] }
