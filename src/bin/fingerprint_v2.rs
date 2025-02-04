@@ -190,22 +190,14 @@ fn find_peaks(spectrogram: &Spectrogram, amp_min: f32, neighborhood_size: usize)
             let mut is_peak = true;
 
             // Define el rango del vecindario.
-            let f_start = if f >= neighborhood_size {
-                f - neighborhood_size
-            } else {
-                0
-            };
+            let f_start = f.saturating_sub(neighborhood_size);
 
             let f_end = if f + neighborhood_size < num_freqs {
                 f + neighborhood_size
             } else {
                 num_freqs - 1
             };
-            let t_start = if t >= neighborhood_size {
-                t - neighborhood_size
-            } else {
-                0
-            };
+            let t_start = t.saturating_sub(neighborhood_size);
             let t_end = if t + neighborhood_size < num_times {
                 t + neighborhood_size
             } else {

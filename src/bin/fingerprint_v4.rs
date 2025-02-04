@@ -20,7 +20,7 @@ use symphonia::{
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 
-const INPUT_FILE: &str = "big_input.wav";
+const INPUT_FILE: &str = "data/input.wav";
 const OUTPUT_FILE: &str = "output.txt";
 const CHUNK_SIZE: usize = 1024 * 4;
 const FUZ_FACTOR: usize = 2;
@@ -28,7 +28,7 @@ const MIN_FREQ: usize = 40;
 const MAX_FREQ: usize = 300;
 
 #[inline]
-fn hash(p: &[usize; 301]) -> usize {
+const fn hash(p: &[usize; 301]) -> usize {
     let p1 = p[40] / FUZ_FACTOR;
     let p2 = p[80] / FUZ_FACTOR;
     let p3 = p[120] / FUZ_FACTOR;
@@ -37,7 +37,7 @@ fn hash(p: &[usize; 301]) -> usize {
 }
 
 #[inline]
-fn get_index(x: usize) -> usize {
+const fn get_index(x: usize) -> usize {
     match x {
         0..=40 => 40,
         41..=80 => 80,

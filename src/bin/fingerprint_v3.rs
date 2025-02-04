@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|&x| Complex::new(x as f32, 0.0))
         .collect();
 
-    let new_len = ((freqs.len() + CHUNK_SIZE - 1) / CHUNK_SIZE) * CHUNK_SIZE;
+    let new_len = freqs.len().div_ceil(CHUNK_SIZE) * CHUNK_SIZE;
     freqs.resize(new_len, Complex::default());
     println!("Time reading and decoding: {:?}", time.elapsed());
 

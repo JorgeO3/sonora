@@ -1,10 +1,5 @@
 use {
-    rayon::prelude::*,
-    rustfft::{num_complex::Complex, FftPlanner},
-    std::{
-        fs::File,
-        io::{BufWriter, Write},
-    },
+    std::fs::File,
     symphonia::{
         core::{
             audio::{AudioBufferRef, Signal},
@@ -30,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         symphonia::default::get_codecs().make(&track.codec_params, &DecoderOptions::default())?;
 
     // Leer y decodificar, almacenando en buffer
-    let mut raw_samples: Vec<i16> = Vec::with_capacity(1024 * 1024); // Ajustar capacidad según necesidad
+    let raw_samples: Vec<i16> = Vec::with_capacity(1024 * 1024); // Ajustar capacidad según necesidad
     let mut counter = 0;
 
     while let Ok(packet) = wave.next_packet() {

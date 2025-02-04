@@ -16,14 +16,14 @@ use {
     },
 };
 
-const INPUT_FILE: &str = "data/big_input.wav";
+const INPUT_FILE: &str = "data/input.wav";
 const OUTPUT_FILE: &str = "output.txt";
 const CHUNK_SIZE: usize = 1024 * 4;
 const FUZ_FACTOR: usize = 2;
 const MIN_FREQ: usize = 40;
 const MAX_FREQ: usize = 300;
 
-fn hash(p: &[usize; 301]) -> usize {
+const fn hash(p: &[usize; 301]) -> usize {
     let p1 = p[40] / FUZ_FACTOR;
     let p2 = p[80] / FUZ_FACTOR;
     let p3 = p[120] / FUZ_FACTOR;
@@ -31,7 +31,7 @@ fn hash(p: &[usize; 301]) -> usize {
     (p4 * 100_000_000) + (p3 * 100_000) + (p2 * 100) + p1
 }
 
-fn get_index(x: usize) -> usize {
+const fn get_index(x: usize) -> usize {
     match x {
         0..=40 => 40,
         41..=80 => 80,
@@ -40,6 +40,18 @@ fn get_index(x: usize) -> usize {
         _ => 300,
     }
 }
+
+const fn gen_lookup_table() -> [usize; 301] {
+    let mut table = [0; 301];
+    let mut i = 0;
+    while i < 301 {
+        table[i] = get_index(i);
+        i += 1;
+    }
+    table
+}
+
+const FREQ_INDEXES: [usize; 301] = gen_lookup_table();
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Inicializar cronómetro
@@ -64,6 +76,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    println!("Time reading and decoding: {:?}", time.elapsed());
+
     // Convertir a números complejos en paralelo
     let mut freqs: Vec<Complex<f32>> = raw_samples
         .par_iter()
@@ -81,45 +95,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut planner = FftPlanner::new();
     let fft = planner.plan_fft_forward(CHUNK_SIZE);
 
-    freqs.par_chunks_mut(CHUNK_SIZE).for_each(|chunk| {
-        let mut buffer = chunk.to_vec();
-        fft.process(&mut buffer);
-        // Copiar resultados de vuelta si es necesario
-        for (i, sample) in buffer.iter().enumerate() {
-            chunk[i] = *sample;
-        }
-    });
+    freqs
+        .par_chunks_mut(CHUNK_SIZE)
+        .for_each(|chunk| fft.process(chunk));
 
     println!("Tiempo de FFT: {:?}", fft_start.elapsed());
 
     // Preparar índices de frecuencia
     let hash_start = std::time::Instant::now();
-    let freq_indexes: Vec<usize> = (MIN_FREQ..MAX_FREQ).map(get_index).collect();
 
     // Realizar hashing en paralelo
-    let results: Vec<usize> = freqs
+    let results = freqs
         .par_chunks(CHUNK_SIZE)
         .map(|chunk| {
             let mut points = [0_usize; 301];
             let mut hscores = [0.0_f32; 301];
-            for (freq, &index) in (MIN_FREQ..MAX_FREQ).zip(freq_indexes.iter()) {
-                if freq >= CHUNK_SIZE {
-                    continue; // Evitar out-of-bounds
-                }
-                let sample = chunk[freq];
+
+            // use the lookup table
+            for i in MIN_FREQ..MAX_FREQ {
+                let index = FREQ_INDEXES[i];
+                let sample = chunk[i];
                 let mag = sample.re * sample.re + sample.im * sample.im;
                 if mag > hscores[index] {
-                    points[index] = freq;
+                    points[index] = i;
                     hscores[index] = mag;
                 }
             }
+
             hash(&points)
         })
-        .collect();
+        .collect::<Vec<usize>>();
 
     // Escribir resultados
     let file = File::create(OUTPUT_FILE)?;
-    let mut buf = BufWriter::with_capacity(1024 * 1024, file);
+    let mut buf = BufWriter::with_capacity(1024 * 1024 * 1024, file);
     for result in results {
         writeln!(buf, "{}", result)?;
     }

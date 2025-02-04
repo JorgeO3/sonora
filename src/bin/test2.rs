@@ -2,7 +2,7 @@ use std::fs::File;
 
 use symphonia::{
     core::{
-        audio::{AudioBufferRef, Signal},
+        audio::AudioBufferRef,
         codecs::DecoderOptions,
         formats::FormatReader,
         io::MediaSourceStream,
